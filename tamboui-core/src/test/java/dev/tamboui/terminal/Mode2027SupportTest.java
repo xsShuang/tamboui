@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Size;
 
@@ -256,11 +256,8 @@ class Mode2027SupportTest {
         }
 
         @Override
-        public void draw(Iterable<CellUpdate> updates) throws IOException {
-            // Not used
-        }
-
-        @Override
+        public void draw(DiffResult diff) throws IOException {
+        }        @Override
         public void clear() throws IOException {
             // Not used
         }

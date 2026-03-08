@@ -18,6 +18,7 @@ val modules = listOf(
     "tamboui-tfx-tui",
     "tamboui-tfx-toolkit",
     "tamboui-demos",
+    "tamboui-benchmarks",
     "docs"
 )
 

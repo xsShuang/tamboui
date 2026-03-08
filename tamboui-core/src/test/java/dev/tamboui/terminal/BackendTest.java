@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Size;
 
@@ -138,11 +138,8 @@ class BackendTest {
         }
 
         @Override
-        public void draw(Iterable<CellUpdate> updates) throws IOException {
-            // Not used in these tests
-        }
-
-        @Override
+        public void draw(DiffResult diff) throws IOException {
+        }        @Override
         public void flush() throws IOException {
             // Not used in these tests
         }

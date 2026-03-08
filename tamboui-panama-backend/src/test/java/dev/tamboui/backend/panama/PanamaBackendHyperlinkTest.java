@@ -25,6 +25,7 @@ class PanamaBackendHyperlinkTest {
 
     @Test
     @DisplayName("draw emits OSC8 start and end around linked cell")
+    @SuppressWarnings("deprecation")
     void hyperlinkStartAndEndAroundCell() throws IOException {
         FakeTerminal terminal = new FakeTerminal();
         PanamaBackend backend = new PanamaBackend(terminal);
@@ -51,6 +52,7 @@ class PanamaBackendHyperlinkTest {
 
     @Test
     @DisplayName("draw ends hyperlink before next non-linked cell")
+    @SuppressWarnings("deprecation")
     void hyperlinkEndsBeforePlainCell() throws IOException {
         FakeTerminal terminal = new FakeTerminal();
         PanamaBackend backend = new PanamaBackend(terminal);

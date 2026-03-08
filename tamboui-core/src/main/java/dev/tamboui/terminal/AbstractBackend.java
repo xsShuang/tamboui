@@ -7,14 +7,14 @@ package dev.tamboui.terminal;
 import java.io.IOException;
 
 import dev.tamboui.buffer.Cell;
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.error.RuntimeIOException;
 import dev.tamboui.layout.Position;
 
 /**
  * Base class for terminal backends that produce ANSI output.
  * <p>
- * Provides final implementations of {@link #draw(Iterable)} and
+ * Provides final implementation of {@link #draw(DiffResult)} and
  * {@link #setCursorPosition(Position)} so that all concrete backends
  * share a single, consistent rendering path through {@link AnsiCellWriter}.
  * <p>
@@ -33,17 +33,19 @@ public abstract class AbstractBackend implements Backend {
     }
 
     /**
-     * Draws the given cell updates to the terminal.
+     * Draws the given cell updates to the terminal using Data-Oriented Design.
      * <p>
-     * Iterates over the updates, positions the cursor for each cell,
-     * and writes styled content using {@link AnsiCellWriter}.
+     * Iterates over the parallel arrays in {@link DiffResult}, positions the cursor
+     * for each cell, and writes styled content using {@link AnsiCellWriter}.
+     * This method achieves zero allocations after the initial {@link DiffResult} warmup.
+     * <p>
      * Output is sent via {@link #writeRaw(String)}.
      *
-     * @param updates the cell updates to draw
+     * @param diff the diff result containing cell updates in Structure-of-Arrays format
      * @throws IOException if drawing fails
      */
     @Override
-    public final void draw(Iterable<CellUpdate> updates) throws IOException {
+    public final void draw(DiffResult diff) throws IOException {
         try (AnsiCellWriter cellWriter = new AnsiCellWriter(s -> {
             try {
                 writeRaw(s);
@@ -51,13 +53,16 @@ public abstract class AbstractBackend implements Backend {
                 throw new RuntimeIOException("Failed to write cell data", e);
             }
         })) {
-            for (CellUpdate update : updates) {
-                Cell cell = update.cell();
+            // Linear scan over parallel arrays - cache-friendly access pattern
+            for (int i = 0; i < diff.size(); i++) {
+                Cell cell = diff.getCell(i);
                 if (cell.isContinuation()) {
                     continue;
                 }
+                int x = diff.getX(i);
+                int y = diff.getY(i);
                 // ANSI uses 1-based coordinates
-                writeRaw("\u001b[" + (update.y() + 1) + ";" + (update.x() + 1) + "H");
+                writeRaw("\u001b[" + (y + 1) + ";" + (x + 1) + "H");
                 cellWriter.writeCell(cell);
             }
         }

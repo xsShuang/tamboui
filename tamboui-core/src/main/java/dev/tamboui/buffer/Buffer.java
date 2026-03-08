@@ -483,37 +483,35 @@ public final class Buffer {
     }
 
     /**
-     * Calculates the differences between this buffer and another.
-     * Returns a list of cell updates needed to transform this buffer into the other.
+     * Calculates the differences between this buffer and another using a
+     * Data-Oriented Design approach with parallel arrays.
+     * <p>
+     * The output {@link DiffResult} is <b>not cleared</b> before writing - the
+     * caller must call {@link DiffResult#clear()} after the result is no longer needed.
      *
      * @param other the buffer to compare with
-     * @return a list of cell updates representing the differences
+     * @param out the diff result to append updates to (not cleared by this method)
+     * @see DiffResult
      */
-    public List<CellUpdate> diff(Buffer other) {
-        List<CellUpdate> updates = new ArrayList<>();
-
+    public void diff(Buffer other, DiffResult out) {
         if (!this.area.equals(other.area)) {
-            // If areas differ, return all cells from other as updates
             for (int y = other.area.top(); y < other.area.bottom(); y++) {
                 for (int x = other.area.left(); x < other.area.right(); x++) {
-                    updates.add(new CellUpdate(x, y, other.get(x, y)));
+                    out.add(x, y, other.get(x, y));
                 }
             }
-            return updates;
+            return;
         }
 
         for (int i = 0; i < content.length; i++) {
             Cell thisCell = content[i];
             Cell otherCell = other.content[i];
-            // Fast path: reference equality means same cell, no update needed
             if (thisCell != otherCell && !thisCell.equals(otherCell)) {
                 int x = area.x() + (i % area.width());
                 int y = area.y() + (i / area.width());
-                updates.add(new CellUpdate(x, y, otherCell));
+                out.add(x, y, otherCell);
             }
         }
-
-        return updates;
     }
 
     /**

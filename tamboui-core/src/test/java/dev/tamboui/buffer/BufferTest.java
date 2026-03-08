@@ -106,22 +106,25 @@ class BufferTest {
 
         curr.setString(0, 0, "Hi", Style.EMPTY);
         // diff returns cells from `other` (curr) where they differ from `this` (prev)
-        List<CellUpdate> updates = prev.diff(curr);
+        DiffResult diff = new DiffResult();
+        prev.diff(curr, diff);
 
-        assertThat(updates).hasSize(2);
-        assertThat(updates.get(0).x()).isEqualTo(0);
-        assertThat(updates.get(0).y()).isEqualTo(0);
-        assertThat(updates.get(0).cell().symbol()).isEqualTo("H");
+        assertThat(diff.size()).isEqualTo(2);
+        assertThat(diff.getX(0)).isEqualTo(0);
+        assertThat(diff.getY(0)).isEqualTo(0);
+        assertThat(diff.getCell(0).symbol()).isEqualTo("H");
     }
 
     @Test
-    @DisplayName("Buffer diff with no changes returns empty list")
+    @DisplayName("Buffer diff with no changes returns empty result")
     void diffNoChanges() {
         Rect area = new Rect(0, 0, 5, 5);
         Buffer a = Buffer.empty(area);
         Buffer b = Buffer.empty(area);
 
-        assertThat(a.diff(b)).isEmpty();
+        DiffResult diff = new DiffResult();
+        a.diff(b, diff);
+        assertThat(diff.isEmpty()).isTrue();
     }
 
     @Test

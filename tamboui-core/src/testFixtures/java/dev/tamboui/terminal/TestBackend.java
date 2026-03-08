@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Size;
 
@@ -150,7 +150,8 @@ public class TestBackend implements Backend {
     }
 
     @Override
-    public void draw(Iterable<CellUpdate> updates) throws IOException {
+    public void draw(DiffResult diff) throws IOException {
+        // No-op for test backend
     }
 
     @Override

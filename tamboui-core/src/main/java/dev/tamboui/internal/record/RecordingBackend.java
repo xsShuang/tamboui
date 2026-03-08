@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import dev.tamboui.buffer.Buffer;
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.layout.Size;
@@ -66,10 +66,10 @@ public final class RecordingBackend implements Backend {
     }
 
     @Override
-    public void draw(Iterable<CellUpdate> updates) throws IOException {
-        // Apply updates to our buffer
-        for (CellUpdate update : updates) {
-            buffer.set(update.x(), update.y(), update.cell());
+    public void draw(DiffResult diff) throws IOException {
+        // Apply updates to our buffer (DoD version)
+        for (int i = 0; i < diff.size(); i++) {
+            buffer.set(diff.getX(i), diff.getY(i), diff.getCell(i));
         }
         hasDrawn = true;
 
