@@ -174,6 +174,17 @@ public interface Backend extends AutoCloseable {
     }
 
     /**
+     * Writes a CharSequence directly to the terminal output.
+     * The default implementation converts to String.
+     *
+     * @param data the CharSequence to write
+     * @throws IOException if writing fails
+     */
+    default void writeRaw(CharSequence data) throws IOException {
+        writeRaw(data.toString());
+    }
+
+    /**
      * Registers a handler to be called when the terminal is resized.
      *
      * @param handler the handler to call on resize

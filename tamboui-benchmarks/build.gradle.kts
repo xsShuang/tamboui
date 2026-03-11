@@ -19,7 +19,7 @@ jmh {
     timeUnit = "us"  // Microseconds
 
     // Optionally configure specific benchmarks to run
-    includes = listOf(".*renderPipeline.*")
+    includes = listOf(".*backendDraw.*")
 
     // Profilers: perfnorm shows CPU counters, gc shows allocation rate
     profilers = listOf("perfnorm", "gc")
