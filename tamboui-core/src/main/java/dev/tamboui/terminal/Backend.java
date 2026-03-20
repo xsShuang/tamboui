@@ -7,7 +7,7 @@ package dev.tamboui.terminal;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Size;
 
@@ -18,13 +18,16 @@ import dev.tamboui.layout.Size;
 public interface Backend extends AutoCloseable {
 
     /**
-     * Draws the given cell updates to the terminal.
+     * Draws the given cell updates to the terminal using a Data-Oriented Design approach.
+     * <p>
+     * This is the primary rendering method, optimized for zero allocations with parallel arrays.
      *
-     * @param updates the cell updates to draw
+     * @param diff the diff result containing cell updates in Structure-of-Arrays format
      * @throws IOException if drawing fails
      * @see AbstractBackend
+     * @see DiffResult
      */
-    void draw(Iterable<CellUpdate> updates) throws IOException;
+    void draw(DiffResult diff) throws IOException;
 
     /**
      * Flushes any buffered output to the terminal.
@@ -168,6 +171,17 @@ public interface Backend extends AutoCloseable {
      */
     default void writeRaw(String data) throws IOException {
         writeRaw(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Writes a CharSequence directly to the terminal output.
+     * The default implementation converts to String.
+     *
+     * @param data the CharSequence to write
+     * @throws IOException if writing fails
+     */
+    default void writeRaw(CharSequence data) throws IOException {
+        writeRaw(data.toString());
     }
 
     /**

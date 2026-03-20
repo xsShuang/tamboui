@@ -4,7 +4,6 @@
  */
 package dev.tamboui.buffer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -23,6 +22,14 @@ import dev.tamboui.text.Span;
  * to minimize updates sent to the backend.
  */
 public final class Buffer {
+
+    // Pre-allocated single-char strings for ASCII codepoints to avoid repeated allocation
+    private static final String[] ASCII_STRINGS = new String[128];
+    static {
+        for (int i = 0; i < 128; i++) {
+            ASCII_STRINGS[i] = String.valueOf((char) i);
+        }
+    }
 
     private final Rect area;
     private final Cell[] content;
@@ -248,16 +255,17 @@ public final class Buffer {
                             // No room for 2-wide flag, replace with space
                             if (col >= area.left()) {
                                 Cell existing = get(col, y);
-                                set(col, y, existing.patchStyle(style).symbol(" "));
+                                set(col, y, new Cell(" ", existing.style().patch(style)));
                             }
                             col++;
                         } else if (col >= area.left()) {
                             Cell current = get(col, y);
                             if (current.isContinuation() && col > area.left()) {
-                                set(col - 1, y, get(col - 1, y).symbol(" "));
+                                Cell prev = get(col - 1, y);
+                                set(col - 1, y, new Cell(" ", prev.style()));
                             }
                             Cell existing = get(col, y);
-                            set(col, y, existing.patchStyle(style).symbol(flag));
+                            set(col, y, new Cell(flag, existing.style().patch(style)));
                             set(col + 1, y, Cell.CONTINUATION);
                             col += 2;
                         }
@@ -282,13 +290,13 @@ public final class Buffer {
             }
             appendToLast = false;
 
-            String symbol = new String(Character.toChars(codePoint));
+            String symbol = codePoint < 128 ? ASCII_STRINGS[codePoint] : new String(Character.toChars(codePoint));
 
             if (charWidth == 2 && col + 1 >= area.right()) {
                 // Wide char at rightmost column: no room for continuation, replace with space
                 if (col >= area.left()) {
                     Cell existing = get(col, y);
-                    set(col, y, existing.patchStyle(style).symbol(" "));
+                    set(col, y, new Cell(" ", existing.style().patch(style)));
                 }
                 col++;
                 i += Character.charCount(codePoint);
@@ -299,7 +307,8 @@ public final class Buffer {
                 // When overwriting a continuation cell, clear the preceding wide char
                 Cell current = get(col, y);
                 if (current.isContinuation() && col > area.left()) {
-                    set(col - 1, y, get(col - 1, y).symbol(" "));
+                    Cell prev = get(col - 1, y);
+                    set(col - 1, y, new Cell(" ", prev.style()));
                 }
 
                 // If this is a wide char, check if the next cell is also a continuation of something
@@ -312,8 +321,7 @@ public final class Buffer {
                 }
 
                 Cell existing = get(col, y);
-                Cell newCell = existing.patchStyle(style).symbol(symbol);
-                set(col, y, newCell);
+                set(col, y, new Cell(symbol, existing.style().patch(style)));
 
                 // Place continuation cell for wide characters
                 if (charWidth == 2) {
@@ -483,37 +491,35 @@ public final class Buffer {
     }
 
     /**
-     * Calculates the differences between this buffer and another.
-     * Returns a list of cell updates needed to transform this buffer into the other.
+     * Calculates the differences between this buffer and another using a
+     * Data-Oriented Design approach with parallel arrays.
+     * <p>
+     * The output {@link DiffResult} is <b>not cleared</b> before writing - the
+     * caller must call {@link DiffResult#clear()} after the result is no longer needed.
      *
      * @param other the buffer to compare with
-     * @return a list of cell updates representing the differences
+     * @param out the diff result to append updates to (not cleared by this method)
+     * @see DiffResult
      */
-    public List<CellUpdate> diff(Buffer other) {
-        List<CellUpdate> updates = new ArrayList<>();
-
+    public void diff(Buffer other, DiffResult out) {
         if (!this.area.equals(other.area)) {
-            // If areas differ, return all cells from other as updates
             for (int y = other.area.top(); y < other.area.bottom(); y++) {
                 for (int x = other.area.left(); x < other.area.right(); x++) {
-                    updates.add(new CellUpdate(x, y, other.get(x, y)));
+                    out.add(x, y, other.get(x, y));
                 }
             }
-            return updates;
+            return;
         }
 
         for (int i = 0; i < content.length; i++) {
             Cell thisCell = content[i];
             Cell otherCell = other.content[i];
-            // Fast path: reference equality means same cell, no update needed
             if (thisCell != otherCell && !thisCell.equals(otherCell)) {
                 int x = area.x() + (i % area.width());
                 int y = area.y() + (i / area.width());
-                updates.add(new CellUpdate(x, y, otherCell));
+                out.add(x, y, otherCell);
             }
         }
-
-        return updates;
     }
 
     /**

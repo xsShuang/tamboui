@@ -6,7 +6,7 @@ package dev.tamboui.capability.test;
 
 import java.io.IOException;
 
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Size;
 import dev.tamboui.terminal.Backend;
@@ -24,11 +24,9 @@ public final class TestBackendProvider implements BackendProvider {
 
     private static final class NoopBackend implements Backend {
         @Override
-        public void draw(Iterable<CellUpdate> updates) {
+        public void draw(DiffResult diff) throws IOException {
             // no-op
-        }
-
-        @Override
+        }        @Override
         public void flush() {
             // no-op
         }

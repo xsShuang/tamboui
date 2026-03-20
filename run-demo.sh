@@ -10,9 +10,13 @@ cd "$SCRIPT_DIR"
 MODULES="tamboui-core tamboui-widgets tamboui-toolkit tamboui-tui tamboui-css tamboui-picocli tamboui-image tamboui-tfx tamboui-tfx-tui tamboui-tfx-toolkit"
 
 usage() {
-    echo "Usage: $0 [demo-name] [--native]"
+    echo "Usage: $0 [demo-name] [--native] [--profile]"
     echo ""
     echo "If no demo name is provided, an interactive selector will be shown."
+    echo ""
+    echo "Options:"
+    echo "  --native   Build and run as native image"
+    echo "  --profile  Enable profiling with DebugNonSafepoints"
     echo ""
     echo "Available demos:"
 
@@ -76,6 +80,7 @@ run_demo() {
     local demo_name="$1"
     local native="$2"
     local use_exec="$3"
+    local profile="$4"
 
     # Find the demo
     if ! find_demo "$demo_name"; then
@@ -87,6 +92,13 @@ run_demo() {
     # Get absolute path to project root (needed for macOS compatibility with Gradle scripts)
     local project_root
     project_root="$(cd "$(dirname "$0")" && pwd)"
+
+    # Set up profiling options if requested
+    if [ "$profile" = true ]; then
+        export JAVA_OPTS="-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints ${JAVA_OPTS:-}"
+        echo "Profiling enabled: JAVA_OPTS=$JAVA_OPTS"
+        echo ""
+    fi
 
     if [ "$native" = true ]; then
         echo "Building native image for $demo_name..."
@@ -113,12 +125,17 @@ run_demo() {
 
 DEMO_NAME=""
 NATIVE=false
+PROFILE=false
 
 # Parse arguments
 while [ $# -gt 0 ]; do
     case "$1" in
         --native)
             NATIVE=true
+            shift
+            ;;
+        --profile)
+            PROFILE=true
             shift
             ;;
         --help|-h)
@@ -142,7 +159,7 @@ done
 
 # If demo name provided directly, run it and exit
 if [ -n "$DEMO_NAME" ]; then
-    run_demo "$DEMO_NAME" "$NATIVE" true
+    run_demo "$DEMO_NAME" "$NATIVE" true "$PROFILE"
     exit 0
 fi
 
@@ -168,7 +185,7 @@ while true; do
     fi
 
     echo ""
-    run_demo "$DEMO_NAME" "$NATIVE" false
+    run_demo "$DEMO_NAME" "$NATIVE" false "$PROFILE"
     echo ""
     echo "Demo exited. Returning to selector..."
     echo ""

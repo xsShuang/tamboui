@@ -155,9 +155,10 @@ class BufferWideCharTest {
 
         curr.setString(0, 0, "世", Style.EMPTY);
 
-        java.util.List<CellUpdate> updates = prev.diff(curr);
+        DiffResult diff = new DiffResult();
+        prev.diff(curr, diff);
         // Should include the wide char cell and the continuation cell
-        assertThat(updates).hasSize(2);
+        assertThat(diff.size()).isEqualTo(2);
     }
 
     @Test
@@ -307,14 +308,15 @@ class BufferWideCharTest {
         String baldMan = "\uD83D\uDC68\u200D\uD83E\uDDB2"; // 👨‍🦲
         curr.setString(0, 0, baldMan, Style.EMPTY);
 
-        java.util.List<CellUpdate> updates = prev.diff(curr);
+        DiffResult diff = new DiffResult();
+        prev.diff(curr, diff);
 
         // Should only have 1 update (cell 0 changed, cell 1 is CONTINUATION in both)
         // Cell 0: baby -> baldMan
         // Cell 1: CONTINUATION -> CONTINUATION (no change)
-        assertThat(updates).hasSize(1);
-        assertThat(updates.get(0).x()).isEqualTo(0);
-        assertThat(updates.get(0).cell().symbol()).isEqualTo(baldMan);
+        assertThat(diff.size()).isEqualTo(1);
+        assertThat(diff.getX(0)).isEqualTo(0);
+        assertThat(diff.getCell(0).symbol()).isEqualTo(baldMan);
     }
 
     @Test
@@ -331,16 +333,21 @@ class BufferWideCharTest {
         String baldMan = "\uD83D\uDC68\u200D\uD83E\uDDB2"; // 👨‍🦲
         curr.setString(0, 0, baldMan, Style.EMPTY);
 
-        java.util.List<CellUpdate> updates = prev.diff(curr);
+        DiffResult diff = new DiffResult();
+        prev.diff(curr, diff);
 
         // Should have 2 updates:
         // Cell 0: "A" -> baldMan
         // Cell 1: "B" -> CONTINUATION
-        assertThat(updates).hasSize(2);
+        assertThat(diff.size()).isEqualTo(2);
 
         // Check both updates are present
-        boolean hasCell0 = updates.stream().anyMatch(u -> u.x() == 0 && u.cell().symbol().equals(baldMan));
-        boolean hasCell1 = updates.stream().anyMatch(u -> u.x() == 1 && u.cell().isContinuation());
+        boolean hasCell0 = false;
+        boolean hasCell1 = false;
+        for (int i = 0; i < diff.size(); i++) {
+            if (diff.getX(i) == 0 && diff.getCell(i).symbol().equals(baldMan)) hasCell0 = true;
+            if (diff.getX(i) == 1 && diff.getCell(i).isContinuation()) hasCell1 = true;
+        }
         assertThat(hasCell0).isTrue();
         assertThat(hasCell1).isTrue();
     }

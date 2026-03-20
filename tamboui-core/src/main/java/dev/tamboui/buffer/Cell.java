@@ -98,7 +98,9 @@ public final class Cell {
      * @return a new cell with the patched style
      */
     public Cell patchStyle(Style patch) {
-        return new Cell(this.symbol, this.style.patch(patch));
+        Style patched = this.style.patch(patch);
+        if (patched.equals(this.style)) return this;
+        return new Cell(this.symbol, patched);
     }
 
     /**

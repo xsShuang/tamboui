@@ -6,11 +6,10 @@ package dev.tamboui.terminal;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.function.Consumer;
 
 import dev.tamboui.buffer.Buffer;
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 import dev.tamboui.error.RuntimeIOException;
 import dev.tamboui.jfr.TerminalDrawEvent;
 import dev.tamboui.layout.Rect;
@@ -26,6 +25,7 @@ public final class Terminal<B extends Backend> implements AutoCloseable {
 
     private final B backend;
     private final OutputStream rawOutput;
+    private final DiffResult diffResult;
     private Buffer currentBuffer;
     private Buffer previousBuffer;
     private boolean hiddenCursor;
@@ -46,6 +46,9 @@ public final class Terminal<B extends Backend> implements AutoCloseable {
             Rect area = Rect.of(size.width(), size.height());
             this.currentBuffer = Buffer.empty(area);
             this.previousBuffer = Buffer.empty(area);
+            // Pre-allocate diff result with capacity for entire terminal
+            // (worst case: every cell changes). This ensures zero reallocation.
+            this.diffResult = new DiffResult(area.area());
         } catch (IOException e) {
             throw new RuntimeIOException("Failed to initialize terminal: " + e.getMessage(), e);
         }
@@ -130,11 +133,12 @@ public final class Terminal<B extends Backend> implements AutoCloseable {
                 Frame frame = new Frame(currentBuffer, rawOutput);
                 renderer.accept(frame);
 
-                // Calculate diff and draw
-                List<CellUpdate> updates = previousBuffer.diff(currentBuffer);
-                if (!updates.isEmpty()) {
-                    backend.draw(updates);
+                // Calculate diff and draw (zero-allocation DoD variant)
+                previousBuffer.diff(currentBuffer, diffResult);
+                if (!diffResult.isEmpty()) {
+                    backend.draw(diffResult);
                 }
+                diffResult.clear();  // Clear after use to release Cell refs for GC
 
                 // Handle cursor
                 if (frame.isCursorVisible()) {
