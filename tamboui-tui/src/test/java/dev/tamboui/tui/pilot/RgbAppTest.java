@@ -4,13 +4,14 @@
  */
 package dev.tamboui.tui.pilot;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.Test;
 
 import dev.tamboui.layout.Size;
 import dev.tamboui.toolkit.app.ToolkitTestRunner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 /**
  * Tests for the RGB color switcher app, demonstrating Pilot with ToolkitTestRunner
  * and widget selection by ID.
@@ -27,23 +28,22 @@ class RgbAppTest {
             Pilot pilot = test.pilot();
 
             pilot.press('r');
-            pilot.pause();
+            pilot.pause(Duration.ofMillis(100));
             assertEquals(RgbAppExample.BackgroundColor.RED, app.getCurrentColor());
 
             pilot.press('g');
-            pilot.pause();
+            pilot.pause(Duration.ofMillis(100));
             assertEquals(RgbAppExample.BackgroundColor.GREEN, app.getCurrentColor());
 
             pilot.press('b');
-            pilot.pause();
+            pilot.pause(Duration.ofMillis(100));
             assertEquals(RgbAppExample.BackgroundColor.BLUE, app.getCurrentColor());
 
             pilot.press('x');
-            pilot.pause();
+            pilot.pause(Duration.ofMillis(100));
             assertEquals(RgbAppExample.BackgroundColor.BLUE, app.getCurrentColor());
 
             pilot.press('q');
-            pilot.pause();
         }
     }
 
